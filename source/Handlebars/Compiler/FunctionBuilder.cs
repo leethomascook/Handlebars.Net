@@ -36,6 +36,7 @@ namespace Handlebars.Compiler
                 var compilationContext = new CompilationContext(_configuration);
                 var expression = CreateExpressionBlock(expressions);
                 expression = StaticReplacer.Replace(expression, compilationContext);
+                expression = UnencodedStatementVisitor.Visit(expression, compilationContext);
                 expression = PartialBinder.Bind(expression, compilationContext);
                 expression = IteratorBinder.Bind(expression, compilationContext);
                 expression = BlockHelperFunctionBinder.Bind(expression, compilationContext);
@@ -44,8 +45,6 @@ namespace Handlebars.Compiler
                 expression = BoolishConverter.Convert(expression, compilationContext);
                 expression = PathBinder.Bind(expression, compilationContext);
                 expression = ContextBinder.Bind(expression, compilationContext, parentContext);
-
-
                 return expression;
             }
             catch (Exception ex)

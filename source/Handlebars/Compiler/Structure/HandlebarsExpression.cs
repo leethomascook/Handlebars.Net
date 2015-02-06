@@ -33,9 +33,10 @@ namespace Handlebars.Compiler
         public static BlockHelperExpression BlockHelper(
             string helperName,
             IEnumerable<Expression> arguments,
-            Expression body)
+            Expression body,
+            Expression inversion)
         {
-            return new BlockHelperExpression(helperName, arguments, body);
+            return new BlockHelperExpression(helperName, arguments, body, inversion);
         }
 
         public static PathExpression Path(string path)
@@ -81,10 +82,10 @@ namespace Handlebars.Compiler
             return new DeferredSectionExpression(path, body, evalMode);
         }
 
-        public static PartialExpression Partial(string partialName,string objectPassedIn)
+      public static PartialExpression Partial(string partialName,string objectPassedIn)
         {
             return new PartialExpression(partialName, objectPassedIn);
-        }
+         }
 
         public static BoolishExpression Boolish(Expression condition)
         {

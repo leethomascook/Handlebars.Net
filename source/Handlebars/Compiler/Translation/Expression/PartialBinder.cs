@@ -36,23 +36,23 @@ namespace Handlebars.Compiler
                 Expression.Constant(pex.PartialName),
                 Expression.Constant(pex.ObjectPassedIn),
                 CompilationContext.BindingContext,
-                Expression.Constant(CompilationContext.Configuration) );
+                Expression.Constant(CompilationContext.Configuration));
         }
 
-        private static void InvokePartial(string partialName,string objectPassedIn,BindingContext context, HandlebarsConfiguration configuration)
+        private static void InvokePartial(string partialName, string objectPassedIn, BindingContext context, HandlebarsConfiguration configuration)
         {
             if (configuration.RegisteredTemplates.ContainsKey(partialName) == false)
             {
                 throw new HandlebarsRuntimeException("Referenced partial name could not be resolved");
             }
-           
+
             if (!string.IsNullOrEmpty(objectPassedIn))
             {
                 var member = context.Value.GetType()
                     .GetProperties(BindingFlags.Instance | BindingFlags.Public).OfType<MemberInfo>()
                     .Concat(
                         context.Value.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance)
-                    ).First(x => x.Name == objectPassedIn);
+                    ).First(x => x.Name == char.ToUpper(objectPassedIn[0]) + objectPassedIn.Substring(1)); //Make it upper case to match .net convention
 
                 object value = AccessMember(context.Value, member);
 

@@ -105,23 +105,13 @@ namespace Handlebars.Compiler
                 {
                     continue;
                 }
-                else if (segment.StartsWith("@"))
-                {
-                    var contextValue = context.GetContextVariable(segment.Substring(1));
-                    if (contextValue == null)
-                    {
-                        throw new HandlebarsRuntimeException("Couldn't bind to context variable");
-                    }
-                    instance = contextValue;
-                    break;
-                }
                 else
                 {
                     foreach (var memberName in segment.Split('.'))
                     {
                         try
                         {
-                            instance = AccessMember(instance, memberName);
+                            instance = this.ResolveValue(context, instance, memberName);
                         }
                         catch (Exception)
                         {
@@ -134,21 +124,39 @@ namespace Handlebars.Compiler
             return instance;
         }
 
-        private static object AccessMember(object instance, string memberName)
+        private object ResolveValue(BindingContext context, object instance, string segment)
         {
+            if (segment.StartsWith("@"))
+            {
+                var contextValue = context.GetContextVariable(segment.Substring(1));
+                if (contextValue == null)
+                {
+                    throw new HandlebarsRuntimeException("Couldn't bind to context variable");
+                }
+                return contextValue;
+            }
+            else
+            {
+                return AccessMember(instance, segment);
+            }
+        }
+
+        private object AccessMember(object instance, string memberName)
+        {
+            var resolvedMemberName = this.ResolveMemberName(memberName);
             //crude handling for dynamic objects that don't have metadata
             if (typeof(IDynamicMetaObjectProvider).IsAssignableFrom(instance.GetType()))
             {
                 try
                 {
-                    return GetProperty(instance, memberName);
+                    return GetProperty(instance, resolvedMemberName);
                 }
                 catch (Exception ex)
                 {
                     throw new HandlebarsRuntimeException("Could not resolve dynamic member name", ex);
                 }
             }
-            var members = instance.GetType().GetMember(memberName);
+            var members = instance.GetType().GetMember(resolvedMemberName);
             if (members.Length == 0)
             {
                 throw new InvalidOperationException("Template referenced property name that does not exist.");
@@ -168,6 +176,12 @@ namespace Handlebars.Compiler
         {
             var site = System.Runtime.CompilerServices.CallSite<Func<System.Runtime.CompilerServices.CallSite, object, object>>.Create(Microsoft.CSharp.RuntimeBinder.Binder.GetMember(0, name, target.GetType(), new[]{ Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo.Create(0, null) }));
             return site.Target(site, target);
+        }
+
+        private string ResolveMemberName(string memberName)
+        {
+            var resolver = this.CompilationContext.Configuration.ExpressionNameResolver;
+            return resolver != null ? resolver.ResolveExpressionName(memberName) : memberName;
         }
     }
 }

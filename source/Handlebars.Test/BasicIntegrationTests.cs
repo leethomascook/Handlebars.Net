@@ -324,6 +324,32 @@ namespace Handlebars.Test
         }
 
         [Test]
+        public void BasicPartial_WithObjectPassedIN()
+        {
+            string source = "Hello, {{>image x}}!";
+
+            var template = Handlebars.Compile(source);
+
+            var data = new
+            {
+                name = "Marc",
+                x = new { url = "/url" }
+            };
+
+            var partialSource = "{{url}}";
+            using (var reader = new StringReader(partialSource))
+            {
+                var partialTemplate = Handlebars.Compile(reader);
+                Handlebars.RegisterTemplate("image", partialTemplate);
+            }
+
+            var result = template(data);
+            Assert.AreEqual("Hello, /url!", result);
+        }
+
+
+
+        [Test]
         public void BasicPartial()
         {
             string source = "Hello, {{>person}}!";
@@ -343,30 +369,6 @@ namespace Handlebars.Test
 
             var result = template(data);
             Assert.AreEqual("Hello, Marc!", result);
-        }
-
-        [Test]
-        public void BasicPartial_WithObjectPassedIN()
-        {
-            string source = "Hello, {{>image x}}!";
-
-            var template = Handlebars.Compile(source);
-
-            var data = new
-            {
-                name = "Marc",
-                x = new { url ="/url"}
-            };
-
-            var partialSource = "{{url}}";
-            using (var reader = new StringReader(partialSource))
-            {
-                var partialTemplate = Handlebars.Compile(reader);
-                Handlebars.RegisterTemplate("image", partialTemplate);
-            }
-
-            var result = template(data);
-            Assert.AreEqual("Hello, /url!", result);
         }
 
 		[Test]
@@ -443,6 +445,26 @@ namespace Handlebars.Test
 			var result = template(data);
 			Assert.AreEqual("Hello, <div>There's HTML here</div>!", result);
 		}
+
+        [Test]
+        public void BasicRoot()
+        {
+            string source = "{{#people}}- {{this}} is member of {{@root.group}}\n{{/people}}";
+
+            var template = Handlebars.Compile(source);
+
+            var data = new {
+                group = "Engineering",
+                people = new []
+                    {
+                        "Rex",
+                        "Todd"
+                    }
+            };
+
+            var result = template(data);
+            Assert.AreEqual("- Rex is member of Engineering\n- Todd is member of Engineering\n", result);
+        }
     }
 }
 
